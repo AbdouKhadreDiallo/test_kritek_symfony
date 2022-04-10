@@ -19,13 +19,13 @@ class AppController extends AbstractController
     public function index(Request $request, ManagerRegistry $doctrine): Response
     {
         $manager = $doctrine->getManager();
-        $tva = 0.18; // 18/100
+        
         
         $invoce = new Facture();
         $line = new Invoicelines();
         $invoce->getInvoicelines()->add($line);
         $form = $this->createForm(InvoiceFormType::class, $invoce);
-
+        $tva = 0.18; // 18/100
         if ($request->isMethod('POST') && $form->handleRequest($request)->isValid()) {
             $items = $invoce->getInvoicelines();
             $lastRecord =  $manager->getRepository(Facture::class)->findOneBy([], ['id' => 'desc']);
@@ -41,6 +41,13 @@ class AppController extends AbstractController
                 $manager->persist($item);
             }
             $manager->flush();
+            unset($form);
+            unset($invoce);
+            unset($line);
+            $invoce = new Facture();
+            $line = new Invoicelines();
+            $invoce->getInvoicelines()->add($line);
+            $form = $this->createForm(InvoiceFormType::class, $invoce);
         }
 
         return $this->render('app/index.html.twig', [
